@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aposta nas Aulas</title>
+<meta name="description" content="As apostas mais seguras do dia na Betclic, comparadas com a realidade estimada: a odd paga, a odd justa e a probabilidade real de perder.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* Uma página: cabeçalho com o dia e três números, depois as 10 apostas mais seguras do dia.
+   Cada cartão abre com a probabilidade real de perder, em número redondo, e compara a odd da Betclic com a odd justa. */
+:root {
+  --paper: #edefe9;
+  --sheet: #fafbf8;
+  --ink: #15171c;
+  --ink-2: #474c55;
+  --ink-3: #61666f;
+  --rule: #d4d7ce;
+  --grid: #dcdfd6;
+  --marker: #f2db36;
+  --on-marker: #15171c;
+  --loss: #d93c37;
+  --font-display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #101215; --sheet: #181b1f; --ink: #ecede8; --ink-2: #babec5; --ink-3: #8b919a;
+    --rule: #2b2f36; --grid: #262a30; --marker: #e3cd34; --on-marker: #15171c; --loss: #e66767;
+    color-scheme: dark;
+  }
+}
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: var(--font-body); font-size: 1rem; line-height: 1.5; -webkit-font-smoothing: antialiased;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.wrap {
+  max-width: 44rem; margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+p { margin: 0; }
+a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+mark { background: var(--marker); color: var(--on-marker); padding: 0 .2em; border-radius: 2px; }
+.eyebrow { font-family: var(--font-display); font-weight: 650; font-size: .72rem; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-2); margin: 0; }
+
+.masthead .wrap { padding-block: 24px 6px; }
+h1 { font-family: var(--font-display); font-weight: 850; font-stretch: 72%; font-size: clamp(2.8rem, 12vw, 4.4rem); line-height: .9; letter-spacing: -.012em; margin: 8px 0 0; }
+.lede { margin-top: 10px; font-size: 1.15rem; font-weight: 700; max-width: 32rem; text-wrap: balance; }
+.kpis { margin-top: 20px; border-top: 2px solid var(--ink); display: grid; }
+@media (min-width: 620px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 24px; } }
+.kpi { padding: 12px 0; border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: minmax(6.2rem, max-content) minmax(0, 1fr); gap: 14px; align-items: center; }
+@media (min-width: 620px) { .kpi { grid-template-columns: 1fr; gap: 6px; border-bottom: 0; align-items: start; } }
+.kpi-v { font-family: var(--font-display); font-weight: 850; font-stretch: 70%; font-size: 2.4rem; line-height: .9; white-space: nowrap; }
+.kpi-l { font-size: .9rem; color: var(--ink-2); }
+
+main .wrap { padding-block: 22px 8px; display: grid; gap: 14px; }
+.list-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 16px; }
+h2 { font-family: var(--font-display); font-weight: 820; font-stretch: 78%; font-size: clamp(1.6rem, 6vw, 2.1rem); line-height: 1; margin: 0; text-wrap: balance; }
+.sub { color: var(--ink-2); font-size: .95rem; max-width: 36rem; }
+.seg { position: relative; display: inline-flex; gap: 4px; padding: 4px; border-radius: 14px; background: var(--sheet); border: 1px solid var(--rule); }
+.seg input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.seg label { padding: 7px 11px; border-radius: 10px; font-weight: 700; font-size: .86rem; cursor: pointer; color: var(--ink-2); white-space: nowrap; }
+.seg input:checked + label { background: var(--ink); color: var(--paper); }
+.seg input:focus-visible + label { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.state { border: 1.5px dashed var(--rule); border-radius: 12px; padding: 22px 16px; text-align: center; color: var(--ink-2); }
+
+.cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px 16px; display: grid; gap: 12px; }
+.c-top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; align-items: start; }
+.rank { font-family: var(--font-display); font-weight: 850; font-stretch: 70%; font-size: 2.1rem; line-height: .85; min-width: 1.2ch; }
+.c-id { min-width: 0; }
+.c-pick { font-family: var(--font-display); font-weight: 800; font-stretch: 84%; font-size: 1.32rem; line-height: 1.1; }
+.c-game { font-size: .84rem; color: var(--ink-3); margin-top: 3px; }
+.lose { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 14px; align-items: center; padding: 10px 12px; border-radius: 10px; background: var(--paper); }
+.lose-v { font-family: var(--font-display); font-weight: 850; font-stretch: 70%; font-size: 3rem; line-height: .85; grid-row: span 2; }
+.lose-l { font-weight: 700; line-height: 1.2; }
+.lose-s { font-size: .88rem; color: var(--ink-2); }
+.c-odds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-block: 1px dashed var(--rule); padding-block: 10px; }
+.c-odds div { display: grid; gap: 4px; align-content: start; min-width: 0; }
+.c-odds div + div { padding-left: 12px; border-left: 1px solid var(--rule); }
+.lbl { font-family: var(--font-display); font-weight: 650; font-size: .66rem; line-height: 1.2; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.v { font-family: var(--font-display); font-weight: 820; font-stretch: 78%; font-size: 1.9rem; line-height: 1; white-space: nowrap; }
+.v mark { padding: 0 .12em; }
+.pb { display: grid; gap: 6px; }
+.pb-track { position: relative; height: 14px; border-radius: 7px; background: var(--grid); overflow: hidden; }
+.pb-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ink); border-radius: 7px 0 0 7px; }
+.pb-gap { position: absolute; top: 0; bottom: 0; background: var(--loss); }
+.pb-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: .86rem; color: var(--ink-2); }
+.pb-legend b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.key { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.key.ink { background: var(--ink); } .key.loss { background: var(--loss); }
+.c-facts { font-size: .95rem; text-wrap: pretty; }
+.c-facts b { font-variant-numeric: tabular-nums; }
+
+.total { border: 2px solid var(--ink); border-radius: 12px; background: var(--sheet); padding: 16px; display: grid; gap: 10px; margin-top: 6px; }
+.total h2 { font-size: clamp(1.4rem, 5vw, 1.7rem); }
+.total p { font-size: 1.02rem; text-wrap: pretty; }
+.method { display: grid; gap: 8px; font-size: .88rem; color: var(--ink-2); max-width: 40rem; padding-top: 8px; }
+
+.foot { border-top: 1px solid var(--rule); margin-top: 26px; }
+.foot .wrap { padding-block: 22px 40px; }
+.help-box { background: var(--sheet); border: 1.5px solid var(--ink); border-radius: 12px; padding: 16px 18px; display: grid; gap: 10px; }
+.help-box h2 { font-size: 1.35rem; }
+.help-box ul { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
+.sel { user-select: all; -webkit-user-select: all; font-weight: 700; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow" id="when">Betclic · a carregar o dia</p>
+    <h1>Aposta nas Aulas</h1>
+    <p class="lede">A odd que te mostram não é a realidade. Nem nas apostas mais seguras do dia.</p>
+    <div class="kpis" id="kpis" hidden>
+      <div class="kpi"><p class="kpi-v" id="k-1"></p><p class="kpi-l" id="k-1-l"></p></div>
+      <div class="kpi"><p class="kpi-v" id="k-2"></p><p class="kpi-l" id="k-2-l"></p></div>
+      <div class="kpi"><p class="kpi-v" id="k-3"></p><p class="kpi-l" id="k-3-l"></p></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="list-head">
+      <h2>As 10 apostas mais seguras de hoje</h2>
+      <div class="seg" role="radiogroup" aria-label="Ordenar a lista">
+        <input type="radio" name="sort" id="sort-p" value="p" checked><label for="sort-p">Mais segura</label>
+        <input type="radio" name="sort" id="sort-m" value="m"><label for="sort-m">Menor margem</label>
+      </div>
+    </div>
+    <p class="sub">Em cada jogo, a opção com mais probabilidade de acontecer, só com odds de 1,20 ou mais. Mesmo essas pagam menos do que valem.</p>
+    <p class="state" id="state">A carregar os jogos de hoje…</p>
+    <ol class="cards" id="cards"></ol>
+
+    <section class="total" id="total" aria-labelledby="total-h" hidden>
+      <h2 id="total-h">Se apostares 10 € em cada uma</h2>
+      <p id="total-1"></p>
+      <p id="total-2"></p>
+    </section>
+
+    <section class="method" aria-labelledby="method-h">
+      <h3 class="eyebrow" id="method-h">Como se fez</h3>
+      <p id="m-source">Odds da Betclic (betclic.pt), recolhidas no dia da aula, antes do início dos jogos, nas competições de topo do site: Premier League, Liga Portugal Betclic, La Liga, Serie A e Bundesliga.</p>
+      <p>Probabilidade real: estimada a partir das próprias odds com o método de Shin, que retira a margem da casa tendo em conta que ela costuma pesar mais nas odds altas. É uma estimativa, não uma certeza.</p>
+      <p>Odd justa: 1 a dividir pela probabilidade real. Margem do jogo: a parte de cada euro apostado que a casa retém, em média. Ficam de fora as opções com odd abaixo de 1,20, que algumas casas nem aceitam.</p>
+    </section>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <section class="help-box" aria-labelledby="help-h">
+      <h2 id="help-h">Se apostar deixou de ser um passatempo</h2>
+      <ul>
+        <li><b>Linha 1414</b> do ICAD: gratuita, anónima e confidencial. Também por email: <span class="sel">1414@icad.min-saude.pt</span></li>
+        <li><b>Autoexclusão</b> no site do SRIJ: impede o acesso a todos os sites de jogo legais em Portugal, no mínimo por 3 meses. <a href="https://www.srij.turismodeportugal.pt" target="_blank" rel="noopener">srij.turismodeportugal.pt</a></li>
+        <li><b>Instituto de Apoio ao Jogador</b>: <span class="sel">968 230 998</span></li>
+      </ul>
+    </section>
+  </div>
+</footer>
+
+<script>
+(() => {
+'use strict';
+
+// Supabase: só leitura da tabela odds_aula (as chaves públicas são feitas para estar no browser)
+const SUPABASE_URL = 'https://klmjdjhvsxvopctgmhyu.supabase.co';
+const KEY_PUBLISHABLE = 'sb_publishable_L3QfJtwa_wYBCsHN4uzgXQ_rcp52nL8';
+const KEY_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtsbWpkamh2c3h2b3BjdGdtaHl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4OTg0NDksImV4cCI6MjEwOTQ3NDQ0OX0._xfD_UcLCzIvQ_IQZqAuem9TEKObm4UGyuOkBekmVNE';
+const MIN_ODD = 1.2;
+const TOP_N = 10;
+const TZ = 'Europe/Lisbon';
+
+const $ = (s) => document.querySelector(s);
+const MINUS = '−', NBSP = ' ';
+function fmt(v, d = 0) {
+  const s = Math.abs(v).toFixed(d);
+  const zero = Number(s) === 0;
+  const [i, f] = s.split('.');
+  return (v < 0 && !zero ? MINUS : '') + i.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + (f ? ',' + f : '');
+}
+const pct = (v, d = 0) => fmt(v * 100, d) + '%';
+const eur = (v, d = 2) => fmt(v, d) + NBSP + '€';
+const odd2 = (v) => fmt(v, 2);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const hhmm = (iso) => new Date(iso).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', timeZone: TZ });
+function dayLabel(isoDate) {
+  const s = new Date(isoDate + 'T12:00:00Z').toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: TZ });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// Método de Shin: probabilidades sem margem, com mais margem atribuída às odds altas
+function shin(odds) {
+  const q = odds.map((o) => 1 / o);
+  const S = q.reduce((a, b) => a + b, 0);
+  const at = (z) => q.map((qi) => (Math.sqrt(z * z + 4 * (1 - z) * qi * qi / S) - z) / (2 * (1 - z)));
+  let lo = 0, hi = 0.99;
+  for (let i = 0; i < 100; i++) {
+    const mid = (lo + hi) / 2;
+    if (at(mid).reduce((a, b) => a + b, 0) > 1) lo = mid; else hi = mid;
+  }
+  return { S, p: at((lo + hi) / 2) };
+}
+
+async function load() {
+  const url = `${SUPABASE_URL}/rest/v1/odds_aula?select=*&order=dia.desc,inicio.asc&limit=300`;
+  let r = await fetch(url, { headers: { apikey: KEY_PUBLISHABLE } });
+  if (!r.ok) r = await fetch(url, { headers: { apikey: KEY_ANON, Authorization: `Bearer ${KEY_ANON}` } });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const rows = await r.json();
+  if (!rows.length) return null;
+  const dia = rows[0].dia;
+  return { dia, games: rows.filter((g) => g.dia === dia) };
+}
+
+function analyse(g) {
+  const odds = g.odds.map(Number);
+  const { S, p } = shin(odds);
+  const k = p.indexOf(Math.max(...p));
+  return {
+    ...g, odds, S, hold: 1 - 1 / S, k, pick: g.opcoes[k], paid: odds[k], p: p[k],
+    implied: 1 / odds[k], fairOdd: 1 / p[k], ret: p[k] * odds[k],
+  };
+}
+
+const pickLabel = (r) => (r.pick === 'Empate' ? 'Empate' : `${r.pick} vence`);
+
+function render(list) {
+  $('#cards').innerHTML = list.map((r, i) => {
+    const lose = 1 - r.p;
+    const gap = Math.max(0, r.implied - r.p);
+    const oneIn = Math.max(2, Math.round(1 / lose));
+    return `<li class="card">
+      <div class="c-top">
+        <span class="rank">${i + 1}</span>
+        <div class="c-id"><p class="c-pick">${esc(pickLabel(r))}</p><p class="c-game">${esc(r.desporto)} · ${esc(r.competicao)} · ${esc(r.inicio ? hhmm(r.inicio) : '')} · ${esc(r.jogo)}</p></div>
+      </div>
+      <div class="lose">
+        <p class="lose-v">${pct(lose)}</p>
+        <p class="lose-l">probabilidade real de perder</p>
+        <p class="lose-s">Cerca de 1 vez em cada ${oneIn}.</p>
+      </div>
+      <div class="c-odds">
+        <div><span class="lbl">Betclic paga</span><b class="v">${odd2(r.paid)}</b></div>
+        <div><span class="lbl">Odd justa</span><b class="v"><mark>${odd2(r.fairOdd)}</mark></b></div>
+        <div><span class="lbl">Diferença</span><b class="v">${fmt(r.paid - r.fairOdd, 2)}</b></div>
+      </div>
+      <div class="pb">
+        <div class="pb-track" role="img" aria-label="Probabilidade real de ganhar ${pct(r.p)}; a odd sugere ${pct(r.implied)}.">
+          <span class="pb-fill" style="width:${(r.p * 100).toFixed(2)}%"></span>
+          <span class="pb-gap" style="left:calc(${(r.p * 100).toFixed(2)}% + 2px);width:calc(${(gap * 100).toFixed(2)}% - 2px)"></span>
+        </div>
+        <div class="pb-legend"><span><i class="key ink"></i>Real: ganha <b>${pct(r.p)}</b></span><span><i class="key loss"></i>A odd sugere <b>${pct(r.implied)}</b></span></div>
+      </div>
+      <p class="c-facts">Por cada 10${NBSP}€ apostados voltam, em média, <b>${eur(10 * r.ret)}</b>. Margem do jogo: <b>${pct(r.hold, 1)}</b>.</p>
+    </li>`;
+  }).join('');
+}
+
+(async () => {
+  let data;
+  try { data = await load(); } catch (e) {
+    $('#state').textContent = 'Não consegui ler os jogos. Verifica a ligação à internet e recarrega a página.';
+    $('#when').textContent = 'Betclic · sem dados';
+    return;
+  }
+  if (!data) { $('#state').textContent = 'Ainda não há jogos recolhidos. Os dados chegam na manhã de cada aula.'; return; }
+
+  const all = data.games.map(analyse);
+  const eligible = all.filter((r) => r.paid >= MIN_ODD);
+  const bySafety = [...eligible].sort((a, b) => b.p - a.p).slice(0, TOP_N);
+  const byMargin = [...bySafety].sort((a, b) => a.hold - b.hold);
+  const excluded = all.filter((r) => r.paid < MIN_ODD).sort((a, b) => b.p - a.p);
+  const collected = data.games.map((g) => g.recolhido_em).sort().pop();
+
+  $('#when').textContent = `Betclic · ${dayLabel(data.dia)} · odds das ${hhmm(collected).replace(':', 'h')}`;
+  $('#state').hidden = true;
+  $('#kpis').hidden = false;
+  const best = bySafety[0];
+  $('#k-1').textContent = `${bySafety.filter((r) => r.S > 1).length} de ${bySafety.length}`;
+  $('#k-1-l').textContent = 'apostas que pagam menos do que o justo';
+  $('#k-2').textContent = pct(1 - best.p);
+  $('#k-2-l').textContent = `probabilidade de perder até na mais segura do dia (${pickLabel(best)})`;
+  const ret = bySafety.reduce((a, r) => a + 10 * r.ret, 0);
+  const wins = bySafety.reduce((a, r) => a + r.p, 0);
+  $('#k-3').textContent = eur(ret);
+  $('#k-3-l').textContent = `voltam, em média, por ${eur(10 * bySafety.length, 0)} apostados nas ${bySafety.length} mais seguras`;
+
+  render(bySafety);
+  document.querySelectorAll('input[name="sort"]').forEach((el) => el.addEventListener('change', () => render(el.value === 'm' ? byMargin : bySafety)));
+
+  $('#total').hidden = false;
+  $('#total-1').innerHTML = `Apostas ${eur(10 * bySafety.length, 0)} no total. Em média ganhas <b>${fmt(wins, 1)}</b> dessas ${bySafety.length} apostas e recebes <b>${eur(ret)}</b>. Perdes <mark>${eur(10 * bySafety.length - ret)}</mark>, mesmo escolhendo sempre a opção mais provável.`;
+  $('#total-2').textContent = excluded.length
+    ? `Ficaram de fora, por terem odd abaixo de 1,20: ${excluded.map((r) => `${r.pick} (${odd2(r.paid)}, perde ${pct(1 - r.p)} das vezes)`).join(', ')}. Nem a aposta "certa" é certa.`
+    : `Foram analisados ${all.length} jogos.`;
+  $('#m-source').textContent = `Odds da Betclic (betclic.pt) recolhidas às ${hhmm(collected).replace(':', 'h')} de ${dayLabel(data.dia).toLowerCase()}, antes do início dos jogos, nas competições de topo do site. Foram analisados ${all.length} jogos.`;
+})();
+})();
+</script>
+</body>
+</html>
