@@ -322,8 +322,9 @@ function analyse(game) {
   return { best, safest };
 }
 
-const pickLabel = (r) => r.main ? (r.pick === 'Empate' ? 'Empate' : `${r.pick} vence`)
-  : (/^(sim|não)$/i.test(r.pick) ? `${r.mercado}: ${r.pick}` : r.pick);
+const bare = (s) => String(s).replace(/^\((.*)\)$/, '$1');
+const pickLabel = (r) => r.main ? (r.pick === 'Empate' ? 'Empate' : `${bare(r.pick)} vence`)
+  : (/^(sim|não)$/i.test(r.pick) ? `${r.mercado}: ${r.pick}` : bare(r.pick));
 
 function render(list) {
   $('#cards').innerHTML = list.map((r, i) => {
