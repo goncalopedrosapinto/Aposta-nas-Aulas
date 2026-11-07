@@ -74,6 +74,14 @@ h2 { font-family: var(--font-display); font-weight: 820; font-stretch: 78%; font
 .seg input:focus-visible + label { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 .state { border: 1.5px dashed var(--rule); border-radius: 12px; padding: 22px 16px; text-align: center; color: var(--ink-2); }
+.prof { border: 1.5px dashed var(--ink-3); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; background: var(--sheet); }
+.prof p { font-size: .95rem; text-wrap: pretty; }
+.prof-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1.5px solid var(--ink); background: var(--ink); color: var(--paper); font: inherit; font-weight: 700; font-size: .95rem; text-decoration: none; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--ink); }
+.btn[disabled] { opacity: .45; cursor: default; }
+.prof-note { color: var(--ink-2); font-size: .88rem !important; }
+.prof-note.ok { color: var(--ink); font-weight: 700; }
 .stale { background: var(--marker); color: var(--on-marker); border-radius: 10px; padding: 10px 14px; font-weight: 700; text-wrap: pretty; }
 
 .cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
@@ -148,6 +156,15 @@ h2 { font-family: var(--font-display); font-weight: 820; font-stretch: 78%; font
 
 <main>
   <div class="wrap">
+    <section class="prof" id="prof" aria-label="Modo professor" hidden>
+      <p class="eyebrow">Modo professor</p>
+      <p>Dados recolhidos às <b id="prof-when">…</b>. A recolha corre sozinha todos os dias às 12h24.</p>
+      <div class="prof-actions">
+        <a class="btn" id="btn-recolher" href="https://claude.ai/code" target="_blank" rel="noopener">Recolher agora no Claude</a>
+        <button class="btn ghost" id="btn-atualizar" type="button">Ver dados novos</button>
+      </div>
+      <p class="prof-note" id="prof-note" role="status">Abre o Claude com o pedido já escrito: só tens de carregar em enviar. Demora cerca de 10 minutos e precisa do Mac ligado, com a app Claude aberta. Esta caixa só aparece com ?prof no endereço.</p>
+    </section>
     <p class="stale" id="stale" role="status" hidden></p>
     <div class="list-head">
       <h2 id="list-h">As 10 apostas mais seguras de hoje</h2>
@@ -368,6 +385,39 @@ function bars(el, items, label) {
     </li>`).join('');
 }
 
+// Modo professor (?prof no endereço): abre o Claude com o pedido de recolha e avisa quando chegam dados novos.
+const TASK_ID = 'trig_01UeB5RhyHrm1i47nrGUywQf';
+const PEDIDO = `Corre agora a tarefa agendada "Aposta nas Aulas — recolha diária das odds" (id ${TASK_ID}) com a ferramenta fire_trigger. Não alteres a tarefa. Confirma só que arrancou.`;
+function setupProf(collected, dia) {
+  if (!new URLSearchParams(location.search).has('prof')) return;
+  $('#prof').hidden = false;
+  $('#prof-when').textContent = `${hhmm(collected).replace(':', 'h')} de ${shortDay(dia)}`;
+  $('#btn-recolher').href = `https://claude.ai/code/new?q=${encodeURIComponent(PEDIDO)}`;
+  $('#btn-atualizar').addEventListener('click', () => location.reload());
+  let timer = null;
+  $('#btn-recolher').addEventListener('click', () => {
+    if (timer) return;
+    const note = $('#prof-note'), start = Date.now();
+    note.classList.remove('ok');
+    note.textContent = 'À espera dos dados novos. Esta página verifica de minuto a minuto, durante 30 minutos.';
+    timer = setInterval(async () => {
+      try {
+        const r = await get('odds_aula_resumo?select=recolhido_em&order=recolhido_em.desc&limit=1');
+        if (r.length && new Date(r[0].recolhido_em) > new Date(collected)) {
+          clearInterval(timer); timer = null;
+          note.classList.add('ok');
+          note.textContent = `Chegaram dados novos (recolhidos às ${hhmm(r[0].recolhido_em).replace(':', 'h')}). Carrega em "Ver dados novos".`;
+          return;
+        }
+      } catch (e) { /* tenta de novo no minuto seguinte */ }
+      if (Date.now() - start > 30 * 60000) {
+        clearInterval(timer); timer = null;
+        note.textContent = 'Passaram 30 minutos sem dados novos. Confirma no Claude se a recolha correu (o Mac tem de estar ligado).';
+      }
+    }, 60000);
+  });
+}
+
 (async () => {
   let data;
   try { data = await load(); } catch (e) {
@@ -388,6 +438,7 @@ function bars(el, items, label) {
   const stale = data.dia !== todayISO();
 
   $('#when').textContent = `Betclic · ${dayLabel(data.dia)} · odds das ${hhmm(collected).replace(':', 'h')}`;
+  setupProf(collected, data.dia);
   if (stale) {
     $('#stale').hidden = false;
     $('#stale').textContent = `Atenção: estes jogos são de ${dayLabel(data.dia).toLowerCase()}. A recolha de hoje ainda não chegou, por isso as odds e os horários já não são atuais.`;
