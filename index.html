@@ -169,7 +169,7 @@ h2 { font-family: var(--font-display); font-weight: 820; font-stretch: 78%; font
 
     <section class="cost" id="cost" aria-labelledby="cost-h" hidden>
       <h2 id="cost-h">Quanto cobra cada tipo de aposta</h2>
-      <p class="sub">Margem média: a parte de cada euro apostado que a casa fica, em média. As apostas "seguras" de golos, handicaps e afins costumam cobrar mais do que o resultado final.</p>
+      <p class="sub" id="cost-note">Margem média: a parte de cada euro apostado que a casa fica, em média.</p>
       <div class="cost-cols">
         <div><h3 class="eyebrow">Por tipo de mercado</h3><ol class="bars" id="bars-tipo"></ol></div>
         <div><h3 class="eyebrow">Por desporto (resultado final)</h3><ol class="bars" id="bars-desp"></ol></div>
@@ -425,6 +425,9 @@ function bars(el, items, label) {
   if (rs && rs.por_tipo && rs.por_tipo.length) {
     $('#cost').hidden = false;
     bars($('#bars-tipo'), [...rs.por_tipo].sort((a, b) => b.margem - a.margem), (x) => `${fmt(x.n)} ${x.n === 1 ? 'mercado' : 'mercados'}`);
+    const t = (re) => rs.por_tipo.find((x) => re.test(x.nome));
+    const tot = t(/^Acima/), fin = t(/^Resultado final/);
+    if (tot && fin) $('#cost-note').textContent = `Margem média: a parte de cada euro apostado que a casa fica, em média. Hoje, as apostas acima/abaixo (golos, pontos, jogos) cobraram ${pct(tot.margem, 1)}, contra ${pct(fin.margem, 1)} no resultado final dos mesmos jogos.`;
     bars($('#bars-desp'), [...rs.por_desporto].sort((a, b) => b.margem - a.margem), (x) => `${fmt(x.n)} ${x.n === 1 ? 'jogo' : 'jogos'}`);
   }
   $('#m-source').textContent = rs
