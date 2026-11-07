@@ -59,7 +59,7 @@ h1 { font-family: var(--font-display); font-weight: 850; font-stretch: 72%; font
 .kpis { margin-top: 20px; border-top: 2px solid var(--ink); display: grid; }
 @media (min-width: 620px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 24px; } }
 .kpi { padding: 12px 0; border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: minmax(6.2rem, max-content) minmax(0, 1fr); gap: 14px; align-items: center; }
-@media (min-width: 620px) { .kpi { grid-template-columns: 1fr; gap: 6px; border-bottom: 0; align-items: start; } }
+@media (min-width: 620px) { .kpi { grid-template-columns: 1fr; gap: 6px; border-bottom: 0; align-items: start; align-content: start; } }
 .kpi-v { font-family: var(--font-display); font-weight: 850; font-stretch: 70%; font-size: 2.4rem; line-height: .9; white-space: nowrap; }
 .kpi-l { font-size: .9rem; color: var(--ink-2); }
 
@@ -74,6 +74,7 @@ h2 { font-family: var(--font-display); font-weight: 820; font-stretch: 78%; font
 .seg input:focus-visible + label { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 .state { border: 1.5px dashed var(--rule); border-radius: 12px; padding: 22px 16px; text-align: center; color: var(--ink-2); }
+.stale { background: var(--marker); color: var(--on-marker); border-radius: 10px; padding: 10px 14px; font-weight: 700; text-wrap: pretty; }
 
 .cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px 16px; display: grid; gap: 12px; }
@@ -133,8 +134,9 @@ h2 { font-family: var(--font-display); font-weight: 820; font-stretch: 78%; font
 
 <main>
   <div class="wrap">
+    <p class="stale" id="stale" role="status" hidden></p>
     <div class="list-head">
-      <h2>As 10 apostas mais seguras de hoje</h2>
+      <h2 id="list-h">As 10 apostas mais seguras de hoje</h2>
       <div class="seg" role="radiogroup" aria-label="Ordenar a lista">
         <input type="radio" name="sort" id="sort-p" value="p" checked><label for="sort-p">Mais segura</label>
         <input type="radio" name="sort" id="sort-m" value="m"><label for="sort-m">Menor margem</label>
@@ -147,12 +149,14 @@ h2 { font-family: var(--font-display); font-weight: 820; font-stretch: 78%; font
     <section class="total" id="total" aria-labelledby="total-h" hidden>
       <h2 id="total-h">Se apostares 10 € em cada uma</h2>
       <p id="total-1"></p>
+      <p id="total-3"></p>
       <p id="total-2"></p>
     </section>
 
     <section class="method" aria-labelledby="method-h">
       <h3 class="eyebrow" id="method-h">Como se fez</h3>
-      <p id="m-source">Odds da Betclic (betclic.pt), recolhidas no dia da aula, antes do início dos jogos, nas competições de topo do site: Premier League, Liga Portugal Betclic, La Liga, Serie A e Bundesliga.</p>
+      <p id="m-source">Odds da Betclic (betclic.pt), recolhidas todos os dias antes das 14h, para jogos que ainda não começaram.</p>
+      <p>Odd: o que recebes por cada 1 € apostado se acertares, já com esse euro incluído. Odd 1,24 quer dizer receber 1,24 € e ganhar só 0,24 €. Se falhares, perdes o euro.</p>
       <p>Probabilidade real: estimada a partir das próprias odds com o método de Shin, que retira a margem da casa tendo em conta que ela costuma pesar mais nas odds altas. É uma estimativa, não uma certeza.</p>
       <p>Odd justa: 1 a dividir pela probabilidade real. Margem do jogo: a parte de cada euro apostado que a casa retém, em média. Ficam de fora as opções com odd abaixo de 1,20, que algumas casas nem aceitam.</p>
     </section>
@@ -200,6 +204,30 @@ const hhmm = (iso) => new Date(iso).toLocaleTimeString('pt-PT', { hour: '2-digit
 function dayLabel(isoDate) {
   const s = new Date(isoDate + 'T12:00:00Z').toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: TZ });
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+const shortDay = (isoDate) => new Date(isoDate + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', timeZone: TZ });
+function todayISO() {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' })
+    .formatToParts(new Date()).map((x) => [x.type, x.value]));
+  return `${p.year}-${p.month}-${p.day}`;
+}
+
+// Todas as combinações de acertos e falhas (jogos independentes): em que parte dos dias se acaba a ganhar?
+function spread(list, stake) {
+  const n = list.length, total = stake * n;
+  let profit = 0;
+  for (let mask = 0; mask < (1 << n); mask++) {
+    let pr = 1, back = 0;
+    for (let i = 0; i < n; i++) {
+      if ((mask >> i) & 1) { pr *= list[i].p; back += stake * list[i].paid; } else pr *= 1 - list[i].p;
+    }
+    if (back > total + 1e-9) profit += pr;
+  }
+  return {
+    profit,
+    allWin: list.reduce((a, r) => a * r.p, 1),
+    best: stake * list.reduce((a, r) => a + r.paid, 0),
+  };
 }
 
 // Método de Shin: probabilidades sem margem, com mais margem atribuída às odds altas
@@ -265,7 +293,7 @@ function render(list) {
         </div>
         <div class="pb-legend"><span><i class="key ink"></i>Real: ganha <b>${pct(r.p)}</b></span><span><i class="key loss"></i>A odd sugere <b>${pct(r.implied)}</b></span></div>
       </div>
-      <p class="c-facts">Por cada 10${NBSP}€ apostados voltam, em média, <b>${eur(10 * r.ret)}</b>. Margem do jogo: <b>${pct(r.hold, 1)}</b>.</p>
+      <p class="c-facts">Apostas 10${NBSP}€: recebes de volta, em média, <b>${eur(10 * r.ret)}</b>, já com a aposta incluída. Perdes <b>${eur(10 - 10 * r.ret)}</b>. Margem do jogo: <b>${pct(r.hold, 1)}</b>.</p>
     </li>`;
   }).join('');
 }
@@ -277,7 +305,7 @@ function render(list) {
     $('#when').textContent = 'Betclic · sem dados';
     return;
   }
-  if (!data) { $('#state').textContent = 'Ainda não há jogos recolhidos. Os dados chegam na manhã de cada aula.'; return; }
+  if (!data) { $('#state').textContent = 'Ainda não há jogos recolhidos. Os dados chegam todos os dias antes das 14h.'; return; }
 
   const all = data.games.map(analyse);
   const eligible = all.filter((r) => r.paid >= MIN_ODD);
@@ -285,29 +313,43 @@ function render(list) {
   const byMargin = [...bySafety].sort((a, b) => a.hold - b.hold);
   const excluded = all.filter((r) => r.paid < MIN_ODD).sort((a, b) => b.p - a.p);
   const collected = data.games.map((g) => g.recolhido_em).sort().pop();
+  const n = bySafety.length;
+  const stale = data.dia !== todayISO();
 
   $('#when').textContent = `Betclic · ${dayLabel(data.dia)} · odds das ${hhmm(collected).replace(':', 'h')}`;
+  if (stale) {
+    $('#stale').hidden = false;
+    $('#stale').textContent = `Atenção: estes jogos são de ${dayLabel(data.dia).toLowerCase()}. A recolha de hoje ainda não chegou, por isso as odds e os horários já não são atuais.`;
+  }
+  $('#list-h').textContent = `As ${n} apostas mais seguras ${stale ? `de ${shortDay(data.dia)}` : 'de hoje'}`;
+  if (!n) { $('#state').textContent = 'Neste dia não há apostas com odd de 1,20 ou mais.'; return; }
+
   $('#state').hidden = true;
   $('#kpis').hidden = false;
   const best = bySafety[0];
-  $('#k-1').textContent = `${bySafety.filter((r) => r.S > 1).length} de ${bySafety.length}`;
+  const staked = 10 * n;
+  $('#k-1').textContent = `${bySafety.filter((r) => r.S > 1).length} de ${n}`;
   $('#k-1-l').textContent = 'apostas que pagam menos do que o justo';
   $('#k-2').textContent = pct(1 - best.p);
   $('#k-2-l').textContent = `probabilidade de perder até na mais segura do dia (${pickLabel(best)})`;
   const ret = bySafety.reduce((a, r) => a + 10 * r.ret, 0);
   const wins = bySafety.reduce((a, r) => a + r.p, 0);
-  $('#k-3').textContent = eur(ret);
-  $('#k-3-l').textContent = `voltam, em média, por ${eur(10 * bySafety.length, 0)} apostados nas ${bySafety.length} mais seguras`;
+  $('#k-3').textContent = eur(ret - staked);
+  $('#k-3-l').textContent = `em média, por cada ${eur(staked, 0)} apostados nas ${n} mais seguras. Recebes ${eur(ret)} de volta, aposta incluída.`;
 
   render(bySafety);
   document.querySelectorAll('input[name="sort"]').forEach((el) => el.addEventListener('change', () => render(el.value === 'm' ? byMargin : bySafety)));
 
   $('#total').hidden = false;
-  $('#total-1').innerHTML = `Apostas ${eur(10 * bySafety.length, 0)} no total. Em média ganhas <b>${fmt(wins, 1)}</b> dessas ${bySafety.length} apostas e recebes <b>${eur(ret)}</b>. Perdes <mark>${eur(10 * bySafety.length - ret)}</mark>, mesmo escolhendo sempre a opção mais provável.`;
+  $('#total-1').innerHTML = `Apostas ${eur(staked, 0)} no total. Em média ganhas <b>${fmt(wins, 1)}</b> dessas ${n} apostas e recebes <b>${eur(ret)}</b> de volta. Perdes <mark>${eur(staked - ret)}</mark>, mesmo escolhendo sempre a opção mais provável.`;
+  const s = spread(bySafety, 10);
+  const up = Math.round(s.profit * 100);
+  $('#total-3').innerHTML = `Então porque é que parece que dá? Se fizesses isto todos os dias, acabavas o dia a ganhar em cerca de <b>${up} de cada 100 dias</b> e a perder nos outros ${100 - up}. Os dias bons existem, mas não pagam os maus. Acertar nas ${n} dava ${eur(s.best)}, e isso só acontece cerca de <b>1 vez em cada ${fmt(Math.round(1 / s.allWin))} dias</b>.`;
   $('#total-2').textContent = excluded.length
     ? `Ficaram de fora, por terem odd abaixo de 1,20: ${excluded.map((r) => `${r.pick} (${odd2(r.paid)}, perde ${pct(1 - r.p)} das vezes)`).join(', ')}. Nem a aposta "certa" é certa.`
     : `Foram analisados ${all.length} jogos.`;
-  $('#m-source').textContent = `Odds da Betclic (betclic.pt) recolhidas às ${hhmm(collected).replace(':', 'h')} de ${dayLabel(data.dia).toLowerCase()}, antes do início dos jogos, nas competições de topo do site. Foram analisados ${all.length} jogos.`;
+  const comps = [...new Set(data.games.map((g) => g.competicao))];
+  $('#m-source').textContent = `Odds da Betclic (betclic.pt) recolhidas às ${hhmm(collected).replace(':', 'h')} de ${dayLabel(data.dia).toLowerCase()}, antes do início dos jogos. Foram analisados ${all.length} jogos: ${comps.join(', ')}.`;
 })();
 })();
 </script>
